@@ -1,0 +1,12 @@
+# Python-specific ignore patterns
+*/__pycache__/*
+*.pyc
+*.pyo
+*.pyd
+
+# Log files
+Automation/Data/Logs/debugging_file.log
+logfile.csv
+
+# Virtual environment directories
+Automation/venv/*
