@@ -2,55 +2,65 @@
 
 import logging.config
 from pathlib import Path
+from typing import Final, Union, Any
 
 import yaml
 from colorlog import ColoredFormatter
 
 
-def logger_setup(json_data: dict):
-    """Create logger which can be passed to other modules."""
+def logger_setup(json_data: dict[str, Union[str, bool, Path]]) -> logging.Logger:
+    """Create logger which can be passed to other modules.
+    Parameters: json_data (dict) - dictionary of initialization values."""
+
+    # Declare return dictionary
+    CONFIG_DICT: Final[dict[str, Any]] = {}
     
     # Create the 'Log' folder if it doesn't exist
-    log_folder = Path.joinpath(json_data.get("work_dir"), json_data.get("log_path"))
-    log_folder.mkdir(exist_ok=True)
+    LOGGER_FOLDER: Final[Path] = Path(str(json_data.get("work_dir")), str(json_data.get("log_path")))
+    LOGGER_FOLDER.mkdir(exist_ok=True)
 
     # Read in logger config yaml file with safe load
     with open(json_data.pop("logger_path"), 'r') as f:
-        config_dict = yaml.safe_load(f)
+        CONFIG_DICT.update(yaml.safe_load(f))
 
     # Update logger file path to include the working directory
-    log_file_path = Path.joinpath(json_data.get("work_dir"), config_dict["handlers"]["file"]["filename"])
+    LOG_FILE_PATH: Final[Path] = json_data.get("work_dir") / CONFIG_DICT["handlers"]["file"]["filename"]
 
     # Create the debugging_file.log if it doesn't exist
-    if not log_file_path.exists():
-        with open(log_file_path, 'w') as file:
+    if not LOG_FILE_PATH.exists():
+        with open(LOG_FILE_PATH, 'w'):
             pass
 
     # Update logger configuration with the new file path
-    config_dict["handlers"]["file"]["filename"] = log_file_path
+    CONFIG_DICT["handlers"]["file"]["filename"] = LOG_FILE_PATH
 
     # Set up console logging based on config_json, set False if not found
     if json_data.pop("logging_colors", False):
-        config_dict['handlers']['console']['formatter'] = 'colorFormatter'
+        CONFIG_DICT['handlers']['console']['formatter'] = 'colorFormatter'
 
         # Create color formatter for console output
         color_formatter = ColoredFormatter(
-            config_dict["formatters"]['colorFormatter']['format'],
-            log_colors=config_dict["formatters"]['colorFormatter']['log_colors'],
+            CONFIG_DICT["formatters"]['colorFormatter']['format'],
+            log_colors=CONFIG_DICT["formatters"]['colorFormatter']['log_colors'],
             reset=True,
         )
 
         # Update console handler with the color formatter
-        config_dict['handlers']['console']['formatter'] = 'color'
-        config_dict['formatters']['color'] = {
+        CONFIG_DICT['handlers']['console']['formatter'] = 'color'
+        CONFIG_DICT['formatters']['color'] = {
             '()': color_formatter.__class__,
             'format': color_formatter._fmt,
             'log_colors': color_formatter.log_colors
         }
     else:
-        config_dict['handlers']['console']['formatter'] = 'consoleFormatter'
+        CONFIG_DICT['handlers']['console']['formatter'] = 'consoleFormatter'
 
     # create logger
-    logging.config.dictConfig(config_dict)
-    logger = logging.getLogger("main")
+    logging.config.dictConfig(CONFIG_DICT)
+    logger: Final[logging.Logger] = logging.getLogger("main")
     return logger
+
+if __name__ == "__main__":
+    from config_json import config_json
+    JSON_DATA: dict[str, Union[str, bool, Path]] = config_json()
+    logger = logger_setup(JSON_DATA)

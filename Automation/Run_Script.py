@@ -5,6 +5,7 @@ import logging
 import traceback
 from pathlib import Path
 from datetime import datetime
+from typing import Any, Union, Final
 
 from Config.project_setup import ConfigSetup
 
@@ -12,19 +13,19 @@ from Config.project_setup import ConfigSetup
 logger = logging.getLogger("main")
 
 
-def main(data: dict) -> None:
+def main(data: dict[str, Any]) -> None:
     """Main function to be run."""
 
     logger.debug(f"Starting main function.")
-    successful_run = False
-    PARENT_DIRECTORY = data.pop("parent_dir")
+    successful_run: bool = False
+    PARENT_DIRECTORY: Final[Path] = data.pop("parent_dir")
 
     try:
         logger.critical(f"Replace this with the actual function you want to run.\n{data}")
     except Exception as e:
         logger.exception(
             f"A fatal error has occured during this run. {str(e)} Please review the debugger log and the Error Stack Trace text file.")
-        log_exception(Path.joinpath(PARENT_DIRECTORY, data.get("ErrorOutput")))
+        log_exception(PARENT_DIRECTORY / str(config.get("ErrorOutput")))
     else:
         successful_run = True
         logger.debug("No errors during automation run.")
@@ -38,15 +39,15 @@ def main(data: dict) -> None:
     logger.debug(f"Main function completed.")
 
 
-def write_log(data: dict, parent_dir: Path, successful_run: bool) -> None:
+def write_log(config: dict[str, Any], parent_dir: Path, successful_run: bool) -> None:
     """Write output of current run to log file."""
 
     # Declare variables
-    SCRIPT_NAME = data.get("ScriptName", parent_dir.name)
-    LOG_FILE_PATH = Path.joinpath(parent_dir, data.get("LogFile"))
-    HEADER_ROW = ["Script Name", "Date/Time Run", "Username", "Successful?"]
+    SCRIPT_NAME: Final[str] = config.get("ScriptName", parent_dir.name)
+    LOG_FILE_PATH: Final[Path] = parent_dir / str(config.get("LogFile"))
+    HEADER_ROW: Final[list[str]] = ["Script Name", "Date/Time Run", "Username", "Successful?"]
 
-    # File does not exist, so create it and write the header row
+    # If file does not exist, create it and write the header row
     if not LOG_FILE_PATH.is_file():
         with open(LOG_FILE_PATH, mode='w', newline='') as log_file:
             log_file_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -55,7 +56,7 @@ def write_log(data: dict, parent_dir: Path, successful_run: bool) -> None:
     # Append content to the CSV file
     with open(LOG_FILE_PATH, mode='a', newline='') as log_file:
         log_file_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        log_file_writer.writerow([SCRIPT_NAME, datetime.now(), data.get("username"), str(successful_run)])
+        log_file_writer.writerow([SCRIPT_NAME, datetime.now(), config.get("username"), str(successful_run)])
 
 
 def log_exception(filename: Path) -> None:
@@ -75,9 +76,9 @@ def log_exception(filename: Path) -> None:
 
 
 if __name__ == "__main__":
-    config = ConfigSetup('Config/Config.json')
-    config_data = config.setup_dict()
-    script_name = config_data.get("ScriptName", config_data.get("parent_dir").name)
+    config = ConfigSetup()
+    config_data: dict[str, Any] = config.setup_dict()
+    script_name: Union[str, Path] = config_data.get("ScriptName", config_data.get("parent_dir").name)
     logger.info(f"Starting {script_name} automation...")
     main(config_data)
     logger.info("Automation completed.")

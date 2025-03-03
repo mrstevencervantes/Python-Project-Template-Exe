@@ -3,19 +3,21 @@
 import csv
 import getpass
 import logging
+from pathlib import Path
+from typing import Final, Union, Any
 
 import pandas as pd
 
 # Create logger
-logger = logging.getLogger("main")
+logger: logging.Logger = logging.getLogger("main")
 
 
-def config_data(json_data: dict) -> dict:
+def config_data(json_data: dict[str, Union[str, bool, Path]]) -> dict[str, Any]:
     """Read config workbook based on file type and create a dictionary."""
 
     # Define file paths and create return dictionary
-    CONFIG_PATH = json_data.pop("config_path")
-    data = {}
+    CONFIG_PATH: Final[Path] = Path(str(json_data.pop("config_path")))
+    data: dict[str, Any] = {}
 
     if CONFIG_PATH.suffix == ".csv":
         with open(CONFIG_PATH, "r") as f:
@@ -39,7 +41,9 @@ def config_data(json_data: dict) -> dict:
     return data
 
 if __name__ == "__main__":
-    from config_json import json_data
-    from logger_module import logger
-    data = config_data(json_data)
+    from config_json import config_json
+    from logger_module import logger_setup
+    JSON_DATA: dict[str, Union[str, bool, Path]] = config_json()
+    logger = logger_setup(JSON_DATA)
+    data: dict[str, Any] = config_data(JSON_DATA)
     logger.debug(f"dictionary data: {data}")
