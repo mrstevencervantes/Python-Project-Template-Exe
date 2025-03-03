@@ -27,7 +27,7 @@ class ConfigSetup:
         """Read and parse JSON configuration file using JSON schema."""
 
         try:
-            return config_json(self.json_path, self.json_schema_path)
+            return config_json(json_path, json_schema_path)
         except FileNotFoundError:
             raise
         except Exception as e:
@@ -51,7 +51,7 @@ class ConfigSetup:
         self._logger_setup(json_data)
 
         try:
-            return config_data(self.json_data)
+            return config_data(json_data)
         except FileNotFoundError:
             raise
         except Exception as e:
