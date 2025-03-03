@@ -10,7 +10,7 @@ from typing import Any, Union, Final
 from Config.project_setup import ConfigSetup
 
 # Setup main logger
-logger = logging.getLogger("main")
+logger: logging.Logger = logging.getLogger("main")
 
 
 def main(data: dict[str, Any]) -> None:
@@ -76,7 +76,7 @@ def log_exception(filename: Path) -> None:
 
 
 if __name__ == "__main__":
-    config = ConfigSetup()
+    config: ConfigSetup = ConfigSetup()
     config_data: dict[str, Any] = config.setup_dict()
     script_name: Union[str, Path] = config_data.get("ScriptName", config_data.get("parent_dir").name)
     logger.info(f"Starting {script_name} automation...")

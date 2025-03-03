@@ -1,6 +1,7 @@
 """Convert JSON file into a dictionary that can be passed to other modules for later use."""
 
 import json
+import platform
 from pathlib import Path
 from typing import Final, Union
 
@@ -8,17 +9,24 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 
-def config_json(json_path: str='Config/Config.json', schema_path: str='Config/config-schema.json') -> dict[str, Union[str, bool, Path]]:
+def config_json(json_path: str, schema_path: str) -> dict[str, Union[str, bool, Path]]:
     """Read JSON configuration file, validate the file with the JSON schema and create final configuration dictionary.
     Parameters: json_path (str) - path to JSON file used for configuration setup.
-                json_schema (str) - path to JSON file used for validating JSON file use for setup."""
+                json_schema (str) - path to JSON file used for validating JSON file use for setup.
+    """
 
     # Build current working directory and file paths
     WORKING_DIR: Final[Path] = create_working_directory()
-    JSON_FILE: Final[Path] = Path.joinpath(WORKING_DIR, json_path)
-    SCHEMA_FILE: Final[Path] = Path.joinpath(WORKING_DIR, schema_path)
     JSON_DATA: Final[dict[str, Union[str, bool, Path]]] = {}
     SCHEMA: Final[dict[str, Union[str, bool, Path]]] = {}
+
+    # Finish building paths based on OS
+    if platform.system() == 'Windows':
+        JSON_FILE: Final[Path] = Path(json_path) if Path(json_path).drive else Path.joinpath(WORKING_DIR, json_path)
+        SCHEMA_FILE: Final[Path] = Path(schema_path) if Path(schema_path).drive else Path.joinpath(WORKING_DIR, schema_path)
+    else:
+        JSON_FILE: Final[Path] = Path(json_path) if Path(json_path).is_absolute() else Path.joinpath(WORKING_DIR, json_path)
+        SCHEMA_FILE: Final[Path] = Path(schema_path) if Path(schema_path).is_absolute() else Path.joinpath(WORKING_DIR, schema_path)
 
     try:
         # Read in JSON file

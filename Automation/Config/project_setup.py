@@ -12,29 +12,33 @@ from Config.config_dict import config_data
 class ConfigSetup:
     """Setup project configuration. 
     Parameters: json_path (str) - path to JSON file used for configuration setup.
-                json_schema (str) - path to schema file used for validating JSON file during setup."""
+                json_schema (str) - path to schema file used for validating JSON file during setup.
+    """
+    
     json_path: str = 'Config/Config.json'
-    json_schema: str = 'Config/config-schema.json'
-    json_data: dict[str, Any] = field(default_factory=dict)
-    config_data: dict[str, Any] = field(default_factory=dict)
+    json_schema_path: str = 'Config/config-schema.json'
+    logger: logging.Logger = field(init=False, repr=False)
 
-    def _config_setup(self) -> None:
+    def __post_init__(self) -> None:
+        """Initialize logger on instance creation."""
+        self.logger = logging.getLogger("main")
+
+    def _config_setup(self, json_path: str, json_schema_path: str) -> dict[str, Any]:
         """Read and parse JSON configuration file using JSON schema."""
 
-        if not self.json_data.items():
-            try:
-                self.json_data: dict[str, Any] = config_json(self.json_path, self.json_schema)
-            except FileNotFoundError:
-                raise
-            except Exception as e:
-                raise Exception(f"Error setting up JSON config: {type(e).__name__} {str(e)}")
+        try:
+            return config_json(self.json_path, self.json_schema_path)
+        except FileNotFoundError:
+            raise
+        except Exception as e:
+            raise Exception(f"Error setting up JSON config: {type(e).__name__} {str(e)}")
 
-    def _logger_setup(self) -> None:
+    def _logger_setup(self, json_data: dict[str, Any]) -> None:
         """Create main logger for project."""
 
-        if not hasattr(ConfigSetup, "logger") and self.json_data.items():
+        if not self.logger.hasHandlers() and json_data.items():
             try:
-                self.logger: logging.Logger = logger_setup(self.json_data)
+                self.logger = logger_setup(json_data)
             except FileNotFoundError:
                 raise
             except Exception as e:
@@ -43,13 +47,11 @@ class ConfigSetup:
     def setup_dict(self) -> dict[str, Any]:
         """Create final dictionary of configuration settings."""
 
-        self._config_setup()
-        self._logger_setup()
+        json_data: dict[str, Any] = self._config_setup(self.json_path, self.json_schema_path)
+        self._logger_setup(json_data)
 
         try:
-            if not self.config_data.items() and self.json_data.items():
-                self.config_data = config_data(self.json_data)
-            return self.config_data
+            return config_data(self.json_data)
         except FileNotFoundError:
             raise
         except Exception as e:
