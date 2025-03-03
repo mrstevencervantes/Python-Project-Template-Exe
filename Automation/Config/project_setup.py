@@ -38,7 +38,7 @@ class ConfigSetup:
 
         if not self.logger.hasHandlers() and json_data.items():
             try:
-                self.logger: logging.Logger = logger_setup(json_data)
+                self.logger = logger_setup(json_data)
             except FileNotFoundError:
                 raise
             except Exception as e:
